@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,30 +38,28 @@ int main(void)
     
     puts("Server is listening...");
 
-    while(1)
-    {
-        clntSocket = accept(srvSocket, (struct sockaddr *)&clntAddr, sizeof(clntAddr));
+    clntSocket = accept(srvSocket, (struct sockaddr *)&clntAddr, sizeof(clntAddr));
+    
+//    while(1)
+//    {
         // if
-       msgBytes = recv(clntSocket, msg, sizeof(msg), 0);
+        while ((msgBytes = recv(clntSocket, msg, sizeof(msg), 0)) > 0)
+        {
 //        send(sckt, msg, msgBytes, 0);
-        puts("Client is connected... ");
-        printf("Recieved - %d", msgBytes);
+            //puts("Client is connected... ");
+            //printf("Recieved - %d\n", msgBytes);
+
+            write(STDOUT_FILENO, msg, msgBytes);
+        }
      //   while(1)
        // {
          //   msgBytes = recv(clntSocket, msg, sizeof(msg), 0);
            // send(clntSocket, msg, msgBytes, 0);
         //}
-    }
+//    }
 
     close(sckt);
 
     return EXIT_SUCCESS;
-}
-
-void setAddress(struct sockaddr_in* addr)
-{
-    addr->sin_family = AF_INET;
-    addr->sin_port = htons(PORT);
-    addr->sin_addr.s_addr = htonl(INADDR_ANY);
 }
 

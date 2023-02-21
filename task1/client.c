@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -8,12 +9,15 @@
 
 #define PORT 12345
 
+char* handleInput(char* input);
+
 int main()
 {
     int sckt;
     struct sockaddr_in address;
-    char message[128];
-
+    char userInput[128];
+    
+    /*
     sckt = socket(AF_INET, SOCK_STREAM, 0);
     
     address.sin_family = AF_INET;
@@ -21,16 +25,29 @@ int main()
     address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
     connect(sckt, (struct sockaddr*)&address, sizeof(address));
+*/
 
-//    while(1)
-//    {
+    while (1)
+    {
         printf(">> ");
-        scanf("%s", message);
-        printf("mmsg = %s", message);
-        send(sckt, message, sizeof(message), 0);
-        //recv(sckt, );
-  //  }
+        fgets(userInput, sizeof(userInput), stdin); // FIXME: fflush(stdin) not works
+//        userInput[strcspn(userInput, "\n")] = 0;
+
+        if (0 == strcmp(userInput, "/exit\n\0"))
+        {
+            puts("Bye bye!");
+            break;
+        }
+
+        printf("<< %s", userInput);
+    }
+
 
     return 0;
+}
+
+char* handleInput(char* input)
+{
+
 }
 
