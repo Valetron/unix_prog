@@ -36,19 +36,21 @@ int main(void)
     if (listen(srvSocket, 1) < 0)
         handle("Error in listne()");
     
-    puts("Server is listening...");
+    puts("[Server] Listening...");
 
-    clntSocket = accept(srvSocket, (struct sockaddr *)&clntAddr, sizeof(clntAddr));
-    
-//    while(1)
-//    {
+//    clntSocket = accept(srvSocket, (struct sockaddr *)&srvAddr, sizeof(srvAddr));
+ 
+    while(1)
+    {
         // if
-        while ((msgBytes = recv(clntSocket, msg, sizeof(msg), 0)) > 0)
-        {
+        clntSocket = accept(srvSocket, NULL, NULL);
+//        while ((msgBytes = recv(clntSocket, msg, sizeof(msg), 0)) > 0)
+  //      {
 //        send(sckt, msg, msgBytes, 0);
             //puts("Client is connected... ");
             //printf("Recieved - %d\n", msgBytes);
 
+            msgBytes = recv(clntSocket, msg, sizeof(msg), 0);
             write(STDOUT_FILENO, msg, msgBytes);
         }
      //   while(1)
@@ -58,7 +60,8 @@ int main(void)
         //}
 //    }
 
-    close(sckt);
+    close(clntSocket);
+    close(srvSocket);
 
     return EXIT_SUCCESS;
 }
