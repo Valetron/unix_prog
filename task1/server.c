@@ -27,38 +27,29 @@ int main(void)
         handle("Error in socket()");
 
     srvAddr.sin_family = AF_INET;
-    srvAddr.sin_addr.s_addr = INADDR_ANY;
     srvAddr.sin_port = htons(PORT);
+    srvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(srvSocket, (struct sockaddr*)&srvAddr, sizeof(srvAddr)) < 0)
         handle("Error in bind()");
 
-    if (listen(srvSocket, 1) < 0)
-        handle("Error in listne()");
+    if (listen(srvSocket, 3) < 0)
+        handle("Error in listen()");
     
     puts("[Server] Listening...");
 
-//    clntSocket = accept(srvSocket, (struct sockaddr *)&srvAddr, sizeof(srvAddr));
- 
+    clntSocket = accept(srvSocket, NULL, NULL);
+
     while(1)
     {
-        // if
-        clntSocket = accept(srvSocket, NULL, NULL);
-//        while ((msgBytes = recv(clntSocket, msg, sizeof(msg), 0)) > 0)
-  //      {
-//        send(sckt, msg, msgBytes, 0);
-            //puts("Client is connected... ");
-            //printf("Recieved - %d\n", msgBytes);
+//        clntSocket = accept(srvSocket, (struct sockaddr *)&clntAddr, sizeof(clntAddr));
 
             msgBytes = recv(clntSocket, msg, sizeof(msg), 0);
-            write(STDOUT_FILENO, msg, msgBytes);
-        }
-     //   while(1)
-       // {
-         //   msgBytes = recv(clntSocket, msg, sizeof(msg), 0);
-           // send(clntSocket, msg, msgBytes, 0);
-        //}
-//    }
+            printf("Client: %s", msg);
+//            write(STDOUT_FILENO, msg, msgBytes);
+            send(clntSocket, msg, msgBytes, 0);
+        //close(clntSocket);
+    }
 
     close(clntSocket);
     close(srvSocket);
