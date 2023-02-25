@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,11 +17,9 @@ int main(void)
 {
     int srvSocket;
     int clntSocket;
-    int sckt;
     int msgBytes;
     char msg[128];
     struct sockaddr_in srvAddr;
-    struct sockaddr_in clntAddr;
 
     srvSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (srvSocket < 0)
@@ -38,20 +37,30 @@ int main(void)
     
     puts("[Server] Listening...");
 
-    clntSocket = accept(srvSocket, NULL, NULL);
+    signal(SIGCHLD, SIG_IGN);
 
     while(1)
     {
-//        clntSocket = accept(srvSocket, (struct sockaddr *)&clntAddr, sizeof(clntAddr));
+        clntSocket = accept(srvSocket, NULL, NULL);
+        if (0 == fork())
+        {
+            while (1)
+            {
+                msgBytes = recv(clntSocket, msg, sizeof(msg), 0);
+                if (0 == msgBytes) 
+                {
+                    puts("Client disconnected");
+                    break;
+                }
 
-            msgBytes = recv(clntSocket, msg, sizeof(msg), 0);
-            printf("Client: %s", msg);
-//            write(STDOUT_FILENO, msg, msgBytes);
-            send(clntSocket, msg, msgBytes, 0);
-        //close(clntSocket);
+                printf("Client: %s", msg);
+                send(clntSocket, msg, msgBytes, 0);
+            }
+            close(clntSocket);
+            exit(0);
+        }
     }
 
-    close(clntSocket);
     close(srvSocket);
 
     return EXIT_SUCCESS;
