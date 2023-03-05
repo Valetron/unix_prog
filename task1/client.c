@@ -4,6 +4,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 
 #include "handle.h"
@@ -15,17 +16,22 @@ char* handleInput(char* input);
 int main()
 {
     int sckt;
-    struct sockaddr_in address;
+    int srvSize;
+    struct sockaddr_un address;
+    struct sockaddr_un server;
     char userInput[128];
     char respons[128];
+    const char* SERVER_NAME = "/tmp/test_unix.socket";
+    const char* CLIENT_NAME = "/tmp/client_socket.socket";
+
+    sckt = socket(AF_UNIX, SOCK_DGRAM, 0);
+    address.sun_family = AF_UNIX;
+    strncpy(address.sun_path, CLIENT_NAME, sizeof(address) - 1); 
     
-    sckt = socket(AF_INET, SOCK_STREAM, 0);
-    
-    address.sin_family = AF_INET;
-    address.sin_port = htons(PORT);
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-    
-    connect(sckt, (struct sockaddr*) &address, sizeof(address));
+    server.sun_family = AF_UNIX;
+    strncpy(server.sun_path, SERVER_NAME, sizeof(address) - 1);
+
+    srvSize = sizeof(server);
 
     while (1)
     {
@@ -38,8 +44,8 @@ int main()
             break;
         }
 
-        write(sckt, userInput, sizeof(userInput));
-        read(sckt, respons, sizeof(userInput));
+        sendto(sckt, userInput, strlen(userInput), 0, (struct sockaddr *)&server, sizeof(server));
+        recvfrom(sckt, respons, sizeof(respons), 0, (struct sockaddr*) &server, &srvSize);
 
         printf("Server: %s", respons);
     }
