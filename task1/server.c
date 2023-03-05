@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/un.h>
 
 #include "handle.h"
 
@@ -16,52 +18,47 @@ void setAddress(struct sockaddr_in* addr);
 int main(void)
 {
     int srvSocket;
-    int clntSocket;
+    int clntSize;
     int msgBytes;
     char msg[128];
-    struct sockaddr_in srvAddr;
+    const char* SERVER_NAME = "/tmp/test_unix.socket";
+    struct sockaddr_un srvAddr;
+    struct sockaddr_un clntAddr;
 
-    srvSocket = socket(AF_INET, SOCK_STREAM, 0);
+    srvSocket = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (srvSocket < 0)
         handle("Error in socket()");
 
-    srvAddr.sin_family = AF_INET;
-    srvAddr.sin_port = htons(PORT);
-    srvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    srvAddr.sun_family = AF_UNIX;
+    strncpy(srvAddr.sun_path, SERVER_NAME, sizeof(srvAddr.sun_path) - 1);
 
+    unlink(SERVER_NAME);
     if (bind(srvSocket, (struct sockaddr*)&srvAddr, sizeof(srvAddr)) < 0)
         handle("Error in bind()");
-
-    if (listen(srvSocket, 3) < 0)
-        handle("Error in listen()");
     
     puts("[Server] Listening...");
 
-    signal(SIGCHLD, SIG_IGN);
+    clntSize = sizeof(clntAddr);
+//    signal(SIGCHLD, SIG_IGN);
 
     while(1)
     {
-        clntSocket = accept(srvSocket, NULL, NULL);
-        if (0 == fork())
+        
+        if (recvfrom(srvSocket, msg, sizeof(msg), 0, (struct sockaddr*) &clntAddr, &clntSize) < 0)
         {
-            while (1)
-            {
-                msgBytes = recv(clntSocket, msg, sizeof(msg), 0);
-                if (0 == msgBytes) 
-                {
-                    puts("Client disconnected");
-                    break;
-                }
+            handle("Error in recvfrom()");
+            break;
+        }
 
-                printf("Client: %s", msg);
-                send(clntSocket, msg, msgBytes, 0);
-            }
-            close(clntSocket);
-            exit(0);
+        printf("Client: %s", msg);
+        if (sendto(srvSocket, msg, strlen(msg), 0, (struct sockaddr*)&clntAddr, clntSize) < 0)
+        {
+            handle("Error in sendto()");
+            break;
         }
     }
 
-    close(srvSocket);
+    unlink(SERVER_NAME);
 
     return EXIT_SUCCESS;
 }
