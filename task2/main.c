@@ -21,14 +21,14 @@ void handler(int sig)
 
 int main(int argc, char** argv)
 {
+    // signal(SIGINT, SIG_IGN);
     signal(SIGINT, handler);
 
     FILE* file = fopen("file.txt", "rb");
-    // fscanf(file, "%d", &num);
+
     fread(&num, sizeof(int), 1, file);
     printf("last number - %d\n", num);
     fclose(file);
-
 
     while (1)
     {
